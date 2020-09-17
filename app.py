@@ -49,7 +49,7 @@ review_emb=review_emb.reshape(1,512)
 y_pred = modelo.predict(review_emb)
 print(y_pred)
 "Bad" if np.argmax(y_pred) == 0 else "Good"
-'''
+''' 
 #########################################
 def model_predict(frase):
     train_reviews_pred = [frase]
