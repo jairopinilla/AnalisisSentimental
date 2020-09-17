@@ -1,14 +1,14 @@
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
-import pandas as pd
-import seaborn as sns
-from pylab import rcParams
+#import pandas as pd
+#import seaborn as sns
+#from pylab import rcParams
 from tqdm import tqdm
-import matplotlib.pyplot as plt
-from matplotlib import rc
-from pandas.plotting import register_matplotlib_converters
-from sklearn.model_selection import train_test_split
+#import matplotlib.pyplot as plt
+#from matplotlib import rc
+#from pandas.plotting import register_matplotlib_converters
+#from sklearn.model_selection import train_test_split
 import tensorflow_hub as hub
 import tensorflow_text 
 #from __future__ import division, print_function
@@ -18,10 +18,15 @@ import os
 import glob
 import re
 from pathlib import Path
+import json   
+from googletrans import Translator
+
 
 # Flask utils
 from flask import Flask, redirect, url_for, request, render_template
 from werkzeug.utils import secure_filename
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+
 
 
 # Define a flask app
@@ -70,15 +75,43 @@ def index():
 #########################################
 @app.route('/predict', methods=['GET', 'POST'])
 def evaluacion():
-
+    
+    translator = Translator()
     content = request.get_json()
     frase = content['frase']    
-    
     print('el input es: ',frase)
 
     retorno = model_predict(frase)
+    ############################################
+
+    translation=translator.translate(frase, dest='en',src='es')
+    traduccion=translation.text
+
+    ##########################################
     
-    return retorno
+    analyser = SentimentIntensityAnalyzer()
+    scorevader = analyser.polarity_scores(traduccion)
+    print(str(scorevader))
+
+    vaderNeg = scorevader['neg']
+    vaderNeu = scorevader['neu']
+    vaderPos = scorevader['pos']
+    vaderCom = scorevader['compound']
+
+
+    dicRespeusta = {   
+    
+    "Sentimiento Modelo": retorno,
+    "traduccion": traduccion,
+    "Vader Negativo": vaderNeg,
+    "Vader Neutro": vaderNeu,
+    "Vader Positivo": vaderPos,
+    "vader total": vaderCom
+    
+    }   
+   
+    json_object = json.dumps(dicRespeusta, indent = 4)  
+    return json_object
    
 #########################################
 if __name__ == '__main__':
